@@ -51,7 +51,7 @@ glyph-block Letter-Latin-Lower-G : begin
 		set-base-anchor 'overlay' Middle [mix (Descender + O) groundy 0.5]
 		set-base-anchor 'strike' Middle (XH / 2)
 
-		create-forked-glyph 'gBar.doubleStorey' : OverlayW obwDoubleStorey
+	derive-composites "gBar.doubleStorey" null "g.doubleStorey" [OverlayW obwDoubleStorey]
 
 	create-glyph 'g.openDoubleStorey' : glyph-proc
 		include : MarkSet.p
@@ -69,7 +69,7 @@ glyph-block Letter-Latin-Lower-G : begin
 			curl [mix RightSB SB 0.435] groundy
 			archv 4
 			g4 grightx [mix (Descender + O) groundy (1.06 * SmallArchDepthA / (SmallArchDepthA + SmallArchDepthB))]
-			hookend (Descender + O)
+			hookend Descender
 			g4 gleftx [mix (Descender + O) groundy (1.06 * SmallArchDepthB / (SmallArchDepthA + SmallArchDepthB))]
 		local gm : mix SB (RightSB - 0.3 * SB) 0.5
 		include : spiro-outline
@@ -81,21 +81,21 @@ glyph-block Letter-Latin-Lower-G : begin
 		set-base-anchor 'overlay' Middle [mix (Descender + O) groundy 0.5]
 		set-base-anchor 'strike' Middle (XH / 2)
 
-		create-forked-glyph 'gBar.openDoubleStorey' : OverlayW obwDoubleStorey
+	derive-composites "gBar.openDoubleStorey" null "g.openDoubleStorey" [OverlayW obwDoubleStorey]
 
 	define SingleStorey : namespace
 		export : define [RoundHookT sink df yTop offset sw] : sink
 			widths.rhs sw
 			[if (sink == spiro-outline) corner flat] (df.rightSB - offset) yTop [heading Downward]
 			curl (df.rightSB - offset) (Descender + SmallArchDepthA)
-			hookend (Descender + O + offset) (sw -- sw)
+			hookend (Descender + offset) (sw -- sw)
 			g4 (df.leftSB + offset) (Descender + SHook)
 			if (sink == spiro-outline) {[corner df.leftSB XH]} {}
 
 		export : define [RoundHook df y0] : RoundHookT dispiro df y0 0 df.mvs
 		export : define [FlatHook df y0] : begin
 			local hd : FlatHookDepth df (9 / 8)
-			local xTerminal : Math.min (df.rightSB - hd.x - 0.1) : mix df.leftSB df.rightSB (1 / 5)
+			local xTerminal : Math.min (df.rightSB - hd.x - TINY) : mix df.leftSB df.rightSB (1 / 5)
 			return : dispiro
 				widths.rhs df.mvs
 				flat df.rightSB y0 [heading Downward]
@@ -154,9 +154,9 @@ glyph-block Letter-Latin-Lower-G : begin
 			singleStorey            SingleStorey.RoundHook
 			singleStoreyFlatHook    SingleStorey.FlatHook
 		object # ear/serif
+			""                    { SingleStorey.AutoSerifedBody    0                      }
 			serifless             { SingleStorey.SeriflessBody      0                      }
 			serifed               { SingleStorey.SerifedBody        0                      }
-			autoSerifed           { SingleStorey.AutoSerifedBody    0                      }
 			earlessCorner         { SingleStorey.EarlessCornerBody  DToothlessRise         }
 			earlessCornerHTB      { SingleStorey.EarlessCornerBody  0                      }
 			earlessRounded        { SingleStorey.EarlessRoundedBody (XH - SmallArchDepthA) }

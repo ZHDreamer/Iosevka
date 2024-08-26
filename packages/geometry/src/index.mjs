@@ -5,6 +5,7 @@ import * as CurveUtil from "./curve-util.mjs";
 import { Point } from "./point.mjs";
 import { QuadifySink } from "./quadify.mjs";
 import { SpiroExpander } from "./spiro-expand.mjs";
+import { PenSpiroExpander } from "./spiro-pen-expand.mjs";
 import { spiroToOutlineWithSimplification } from "./spiro-to-outline.mjs";
 import { strokeArcs } from "./stroke.mjs";
 import { Transform } from "./transform.mjs";
@@ -23,9 +24,6 @@ export class GeometryBase {
 	}
 	getDependencies() {
 		throw new Error("Unimplemented");
-	}
-	unlinkReferences() {
-		return this;
 	}
 	filterTag(fn) {
 		return this;
@@ -142,6 +140,83 @@ export class SpiroGeometry extends CachedGeometry {
 	}
 }
 
+export class SpiroPenGeometry extends CachedGeometry {
+	constructor(gizmo, penProfile, closed, knots) {
+		super();
+		this.m_gizmo = gizmo;
+		this.m_penProfile = penProfile;
+		this.m_closed = closed;
+		this.m_knots = knots;
+	}
+
+	toContoursImpl() {
+		const expander = new PenSpiroExpander(
+			this.m_gizmo,
+			this.m_penProfile,
+			this.m_closed,
+			this.m_knots,
+		);
+		let contours = expander.getGeometry();
+		if (!contours || !contours.length) return [];
+
+		let stack = [];
+		for (const [i, c] of contours.entries()) {
+			stack.push({
+				type: "operand",
+				fillType: TypoGeom.Boolean.PolyFillType.pftNonZero,
+				shape: CurveUtil.convertShapeToArcs([c]),
+			});
+			if (i > 0) {
+				stack.push({ type: "operator", operator: TypoGeom.Boolean.ClipType.ctUnion });
+			}
+		}
+
+		const arcs = TypoGeom.Boolean.combineStack(stack, CurveUtil.BOOLE_RESOLUTION);
+		const ctx = new CurveUtil.BezToContoursSink();
+		TypoGeom.ShapeConv.transferBezArcShape(arcs, ctx);
+		return ctx.contours;
+	}
+
+	toReferences() {
+		return null;
+	}
+	getDependencies() {
+		return null;
+	}
+	filterTag(fn) {
+		return this;
+	}
+
+	measureComplexity() {
+		let cplx = CPLX_NON_EMPTY | CPLX_NON_SIMPLE;
+		for (const z of this.m_penProfile) {
+			if (!isFinite(z.x) || !isFinite(z.y)) cplx |= CPLX_BROKEN;
+		}
+		for (const z of this.m_knots) {
+			if (!isFinite(z.x) || !isFinite(z.y)) cplx |= CPLX_BROKEN;
+		}
+		return cplx;
+	}
+
+	hash(h) {
+		h.beginStruct("SpiroPenGeometry");
+		h.gizmo(this.m_gizmo);
+		h.bool(this.m_closed);
+
+		// Serialize the pen
+		h.beginArray(this.m_penProfile.length);
+		for (const z of this.m_penProfile) h.point(z);
+		h.endArray();
+
+		// Serialize the knots
+		h.beginArray(this.m_knots.length);
+		for (const knot of this.m_knots) h.embed(knot);
+		h.endArray();
+
+		h.endStruct();
+	}
+}
+
 export class DiSpiroGeometry extends CachedGeometry {
 	constructor(gizmo, contrast, closed, biKnots) {
 		super();
@@ -224,7 +299,7 @@ export class ReferenceGeometry extends GeometryBase {
 		this.m_y = y || 0;
 	}
 	unwrap() {
-		return new TransformedGeometry(
+		return TransformedGeometry.create(
 			Transform.Translate(this.m_x, this.m_y),
 			this.m_glyph.geometry,
 		);
@@ -249,16 +324,8 @@ export class ReferenceGeometry extends GeometryBase {
 	measureComplexity() {
 		return this.m_glyph.geometry.measureComplexity();
 	}
-	unlinkReferences() {
-		return this.unwrap().unlinkReferences();
-	}
-
 	hash(h) {
-		h.beginStruct("ReferenceGeometry");
-		h.embed(this.m_glyph.geometry);
-		h.f64(this.m_x);
-		h.f64(this.m_y);
-		h.endStruct();
+		this.unwrap().hash(h);
 	}
 }
 
@@ -284,24 +351,30 @@ export class TaggedGeometry extends GeometryBase {
 	measureComplexity() {
 		return this.m_geom.measureComplexity();
 	}
-	unlinkReferences() {
-		return this.m_geom.unlinkReferences();
-	}
-
 	hash(h) {
 		this.m_geom.hash(h);
 	}
 }
 
 export class TransformedGeometry extends GeometryBase {
+	// PRIVATE
 	constructor(tfm, g) {
 		super();
 		this.m_transform = tfm;
 		this.m_geom = g;
 	}
 
-	withTransform(tfm) {
-		return new TransformedGeometry(Transform.Combine(this.m_transform, tfm), this.m_geom);
+	static create(tfm, g) {
+		if (Transform.isIdentity(tfm)) {
+			return g;
+		} else if (g instanceof TransformedGeometry) {
+			const tCombined = Transform.Combine(g.m_transform, tfm);
+			return TransformedGeometry.create(tCombined, g.m_geom);
+		} else if (g instanceof CombineGeometry || g instanceof BooleanGeometry) {
+			return g.map(x => TransformedGeometry.create(tfm, x));
+		} else {
+			return new TransformedGeometry(tfm, g);
+		}
 	}
 
 	toContours(ctx) {
@@ -328,7 +401,7 @@ export class TransformedGeometry extends GeometryBase {
 	filterTag(fn) {
 		const e = this.m_geom.filterTag(fn);
 		if (!e) return null;
-		return new TransformedGeometry(this.m_transform, e);
+		return TransformedGeometry.create(this.m_transform, e);
 	}
 	measureComplexity() {
 		return (
@@ -336,17 +409,6 @@ export class TransformedGeometry extends GeometryBase {
 			this.m_geom.measureComplexity()
 		);
 	}
-	unlinkReferences() {
-		const unwrapped = this.m_geom.unlinkReferences();
-		if (Transform.isIdentity(this.m_transform)) {
-			return unwrapped;
-		} else if (unwrapped instanceof TransformedGeometry) {
-			return unwrapped.withTransform(this.m_transform);
-		} else {
-			return new TransformedGeometry(this.m_transform, unwrapped);
-		}
-	}
-
 	hash(h) {
 		h.beginStruct("TransformedGeometry");
 		h.gizmo(this.m_transform);
@@ -378,10 +440,6 @@ export class RadicalGeometry extends GeometryBase {
 	measureComplexity() {
 		return this.m_geom.measureComplexity();
 	}
-	unlinkReferences() {
-		return this.m_geom.unlinkReferences();
-	}
-
 	hash(h) {
 		this.m_geom.hash(h);
 	}
@@ -398,6 +456,9 @@ export class CombineGeometry extends GeometryBase {
 		} else {
 			return new CombineGeometry([...this.m_parts, g]);
 		}
+	}
+	map(f) {
+		return new CombineGeometry(this.m_parts.map(f));
 	}
 	toContours(ctx) {
 		let results = [];
@@ -441,19 +502,6 @@ export class CombineGeometry extends GeometryBase {
 		for (const part of this.m_parts) s |= part.measureComplexity();
 		return s;
 	}
-	unlinkReferences() {
-		let parts = [];
-		for (const part of this.m_parts) {
-			const unwrapped = part.unlinkReferences();
-			if (unwrapped instanceof CombineGeometry) {
-				for (const p of unwrapped.m_parts) parts.push(p);
-			} else {
-				parts.push(unwrapped);
-			}
-		}
-		return new CombineGeometry(parts);
-	}
-
 	hash(h) {
 		h.beginStruct("CombineGeometry");
 		h.beginArray(this.m_parts.length);
@@ -468,6 +516,10 @@ export class BooleanGeometry extends CachedGeometry {
 		super();
 		this.m_operator = operator;
 		this.m_operands = operands;
+	}
+
+	map(f) {
+		return new BooleanGeometry(this.m_operator, this.m_operands.map(f));
 	}
 
 	toContoursImpl() {
@@ -530,16 +582,6 @@ export class BooleanGeometry extends CachedGeometry {
 		for (const operand of this.m_operands) s |= operand.measureComplexity();
 		return s;
 	}
-	unlinkReferences() {
-		if (this.m_operands.length === 0) return new CombineGeometry([]);
-		if (this.m_operands.length === 1) return this.m_operands[0].unlinkReferences();
-		let operands = [];
-		for (const operand of this.m_operands) {
-			operands.push(operand.unlinkReferences());
-		}
-		return new BooleanGeometry(this.m_operator, operands);
-	}
-
 	hash(h) {
 		h.beginStruct("BooleanGeometry");
 		h.u32(this.m_operator);
@@ -562,7 +604,10 @@ export class StrokeGeometry extends CachedGeometry {
 
 	toContoursImpl(ctx) {
 		// Produce simplified arcs
-		const nonTransformedGeometry = new TransformedGeometry(this.m_gizmo.inverse(), this.m_geom);
+		const nonTransformedGeometry = TransformedGeometry.create(
+			this.m_gizmo.inverse(),
+			this.m_geom,
+		);
 		let arcs = TypoGeom.Boolean.removeOverlap(
 			CurveUtil.convertShapeToArcs(nonTransformedGeometry.toContours(ctx)),
 			TypoGeom.Boolean.PolyFillType.pftNonZero,
@@ -591,15 +636,6 @@ export class StrokeGeometry extends CachedGeometry {
 	}
 	getDependencies() {
 		return this.m_geom.getDependencies();
-	}
-	unlinkReferences() {
-		return new StrokeGeometry(
-			this.m_geom.unlinkReferences(),
-			this.m_gizmo,
-			this.m_radius,
-			this.m_contrast,
-			this.m_fInside,
-		);
 	}
 	filterTag(fn) {
 		return new StrokeGeometry(
@@ -634,7 +670,10 @@ export class RemoveHolesGeometry extends CachedGeometry {
 
 	toContoursImpl(ctx) {
 		// Produce simplified arcs
-		const nonTransformedGeometry = new TransformedGeometry(this.m_gizmo.inverse(), this.m_geom);
+		const nonTransformedGeometry = TransformedGeometry.create(
+			this.m_gizmo.inverse(),
+			this.m_geom,
+		);
 		let arcs = TypoGeom.Boolean.removeOverlap(
 			CurveUtil.convertShapeToArcs(nonTransformedGeometry.toContours(ctx)),
 			TypoGeom.Boolean.PolyFillType.pftNonZero,
@@ -672,9 +711,6 @@ export class RemoveHolesGeometry extends CachedGeometry {
 	}
 	getDependencies() {
 		return this.m_geom.getDependencies();
-	}
-	unlinkReferences() {
-		return new RemoveHolesGeometry(this.m_geom.unlinkReferences(), this.m_gizmo);
 	}
 	filterTag(fn) {
 		return new RemoveHolesGeometry(this.m_geom.filterTag(fn), this.m_gizmo);
@@ -722,9 +758,6 @@ export class SimplifyGeometry extends CachedGeometry {
 	}
 	getDependencies() {
 		return this.m_geom.getDependencies();
-	}
-	unlinkReferences() {
-		return new SimplifyGeometry(this.m_geom.unlinkReferences());
 	}
 	filterTag(fn) {
 		return new SimplifyGeometry(this.m_geom.filterTag(fn));

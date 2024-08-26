@@ -32,7 +32,7 @@ glyph-block Letter-Latin-Lower-A : begin
 				match hookStyle
 					1 : list
 						g4 df.leftSB (XH - AHook)
-						hookstart (XH - O) (sw -- stroke)
+						hookstart XH (sw -- stroke)
 					2 : InwardSlabArcStart.LtrRhs df.leftSB XH stroke
 				flat df.rightSB (XH - [ADoubleStoreySmoothB df])
 				[if isMask corner curl] df.rightSB y0 [heading Downward]
@@ -292,7 +292,7 @@ glyph-block Letter-Latin-Lower-A : begin
 	link-reduced-variant 'a/sansSerif' 'a' MathSansSerif
 	link-reduced-variant 'a/rtailBase' 'a'
 	link-reduced-variant 'a/turnABase' 'a'
-	alias 'cyrl/a' 0x430 'a'
+	select-variant 'cyrl/a' 0x430 (shapeFrom -- 'a')
 
 	CreateTurnedLetter 'turna' 0x250 'a/turnABase' HalfAdvance (XH / 2)
 
