@@ -1,5 +1,109 @@
 ## Modifications since last major version
 
+### 31.9.1
+
+* Optimize glyphs for `round-top-serifless` and `round-top-base-serifed` variants for `A` part (`cv11`) of Capital AE (`U+00C6`) under Quasi-Proportional.
+* Fix metrics of `U+27D9` and `U+2A05` under Fixed (#2548).
+
+
+### 31.9.0
+
+* Add IJ-acute ligatures (#2483).
+* Allowed customizing menu WWS value to name map (#2488).
+* Optimize glyphs for `rounded-serifless` and `rounded-serifed` variants for Capital Eszett (`ẞ`).
+* Optimize glyph for Capital OE (`U+0152`) under Quasi-Proportional.
+* Optimize glyphs for closed epsilon shapes (`U+025E`, `U+029A`).
+* Optimize glyphs for cursive variants for Greek Lower Beta (`β`) and Cyrillic Lower Ve (`в`).
+* Optimize glyphs for Cyrillic Capital/Lower Broad On (`U+047A`, `U+047B`).
+* Optimize glyphs for Roman Numeral CD shapes (`U+2180`, `U+2182`, `U+2188`).
+* Optimize glyph for Cyrillic Lower Dzze (`U+A689`) under italics.
+* Optimize glyphs for Volapük Ae/Oe/Ue (`U+A79A`..`U+A79F`).
+* Optimize glyph for Latin Lower Dezh Digraph with Palatal Hook (`U+1DF12`).
+* Fix misalignments of square brackets under certain size caused by rounding errors (#2545).
+* Add characters:
+  - WAVY LINE (`U+2307`).
+  - SYMMETRY (`U+232F`).
+  - CONICAL TAPER (`U+2332`).
+  - SLOPE (`U+2333`).
+  - LARGE UP TACK (`U+27D8`).
+  - LARGE DOWN TACK (`U+27D9`).
+  - LOZENGE DIVIDED BY HORIZONTAL RULE (`U+27E0`).
+  - VERTICAL ZIGZAG LINE (`U+299A`).
+  - LEFT WIGGLY FENCE (`U+29D8`) ... RIGHT DOUBLE WIGGLY FENCE (`U+29DB`).
+  - N-ARY SQUARE INTERSECTION OPERATOR (`U+2A05`).
+  - N-ARY SQUARE UNION OPERATOR (`U+2A06`).
+  - VERTICAL SIX DOTS (`U+2E3D`).
+  - WIGGLY VERTICAL LINE (`U+2E3E`).
+
+
+### 31.8.0
+
+* Add characters:
+  - LATIN EPIGRAPHIC LETTER ARCHAIC M (`U+A7FF`) (#2517).
+  - MUSICAL SYMBOL RINFORZANDO (`U+1D18C`) ... MUSICAL SYMBOL FORTE (`U+1D191`) (#2522).
+* Improve glyph for Cyrillic I (`И`/`и`) under slab (#2489).
+  - Bulgarian locale (`'BGR '`) uses original style for capital.
+* Optimize glyph for Tonos Above (`U+0384`) in accented Greek letters.
+* Optimize stroke width of bar for split bowl variants of Cyrillic Lower Ef (`ф`).
+* Optimize glyph for Cyrillic Capital Ef (`Ф`) under Bulgarian locale (`'BGR '`) under slab.
+* Fix seam in glyphs of Cyrillic Capital/Small Letter Zhwe (`U+A684`..`U+A685`).
+* Fix broken shape of certain power and playback symbols under quasi-proportional (#2528).
+* Fix alignment of the suit part of Playing Cards glyphs under quasi-Proportional (#2529).
+
+
+### 31.7.1
+
+* Fix internal seams of variants of outlined letters U+1CCE6 and U+1CCEF (#2509).
+
+
+### 31.7.0
+
+* Fix Macedonian Cyrillic Gje under italics (#2493).
+* Improve widths of overline marks of Serbian italic lower Ghe/Pe/Te.
+* Remove crossbar variants for `Z`/`z` when under Polish locale (`PLK`) to avoid confusion with the handwritten `Ż`/`ż` allograph, `Ƶ`/`ƶ`.
+* Make serif variants for Latin Capital/Small Schwa (`Ə`/`ə`) only appear under Turkic (Turkish/Azerbaijani/etc.) locales (`TRK`, `AZE`, `GAG`, `KAZ`, `TAT`, `CRT`) as other languages that use Latin Schwa (including the IPA) unify its metrics with Open O (`Ɔ`/`ɔ`) or a literal Turned E (`Ǝ`/`ǝ`).
+* Make serifs of Latin Letter Small Capital I (`ɪ`) slightly wider under Quasi-Proportional.
+* Make Cyrillic Small Letter Komi Dje (`ԃ`) slightly wider under Quasi-Proportional.
+* Make serifs of Small Capital and Modifier Letter Reversed N (`ᴎ`/`ᴻ`) more accurately follow the serifs of `N`.
+* Make Som Sign (`⃀`) follow variants of capital `C`.
+* Make Latin Capital Letter Small Capital I (`Ɪ`) slightly wider under Etoile.
+* Add Characters:
+  - CYRILLIC CAPITAL LETTER TJE (`U+1C89`) ... CYRILLIC SMALL LETTER TJE (`U+1C8A`).
+  - COMPOSITION SYMBOL (`U+2384`).
+  - WHITE DIAMOND IN SQUARE (`U+26CB`).
+  - DRIVE SLOW SIGN (`U+26DA`).
+  - SQUARED SALTIRE (`U+26DD`) ... FALLING DIAGONAL IN WHITE CIRCLE IN BLACK SQUARE (`U+26DE`).
+  - HEAVY CIRCLED SALTIRE (`U+2B59`).
+  - TOP HALF LEFT PARENTHESIS (`U+2E59`) ... BOTTOM HALF RIGHT PARENTHESIS (`U+2E5C`).
+  - LATIN CAPITAL LETTER RAMS HORN (`U+A7CB`) (#2506).
+  - LATIN CAPITAL LETTER S WITH DIAGONAL STROKE (`U+A7CC`) ... LATIN SMALL LETTER S WITH DIAGONAL STROKE (`U+A7CD`).
+  - LATIN CAPITAL LETTER LAMBDA (`U+A7DA`) ... LATIN CAPITAL LETTER LAMBDA WITH STROKE (`U+A7DC`).
+  - COUNTING ROD UNIT DIGIT ONE (`U+1D360`) ... COUNTING ROD TENS DIGIT NINE (`U+1D371`).
+
+
+### 31.6.1
+
+- Fix broken accent stacking behavior for partially precomposed characters with leaning anchors (#2492).
+
+
+### 31.6.0
+
+* Add Latin localization forms for Polish and Romanian.
+* Make Combining Square Below (`U+033B`) slightly narrower.
+* Improve glyph visual for Combining Suspension Mark (`U+1DC3`).
+* Make Cyrillic Capital/Small Letter Uk (`U+0478`..`U+0479`) slightly narrower under Quasi-Proportional.
+* Make Cyrillic Capital/Small Letter Round Omega (`U+047A`..`U+047B`) slightly wider under Quasi-Proportional.
+
+
+### 31.5.0
+
+* Add characters:
+  - KAYAH LI SIGN CWI (`U+A92E`).
+  - ZERO WIDTH NON-BREAKING SPACE (`U+FEFF`).
+* Add APL form (`APLF`) for `U+25E0` and `U+25E1`, for UIUA.
+* Add Cyrillic localization forms for Bashkir and Chuvash.
+
+
 ### 31.4.0
 
 * Add characters:

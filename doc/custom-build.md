@@ -3090,7 +3090,7 @@ Subsection `variants` is used to configure character variants in the font. Prope
     <tr><td rowspan="2" width="60"><img src="../images/cv-cyrl-ya-standing-open-tailed-serifed.light.svg#gh-light-mode-only" width=32/><img src="../images/cv-cyrl-ya-standing-open-tailed-serifed.dark.svg#gh-dark-mode-only" width=32/></td><td><code>cyrl-ya = 'standing-open-tailed-serifed'</code>, <code>VAAA = 36</code></td></tr>
     <tr><td>Cyrillic Lower Ya (<code>я</code>) with standing leg (like Helvetica), open contour, tail, and serifs</td></tr>
     </table></details>
-  - Styles for `ij` (Dots in letters “i” and “j” in particular (not including dots in other letters, even if they are similar))
+  - Styles for `ij` (Dots in letters “i” and “j” in particular)
     <details><summary>2 variants</summary>
     <table>
     <tr><td rowspan="2" width="92"><img src="../images/cv-tittle-round.light.svg#gh-light-mode-only" width=64/><img src="../images/cv-tittle-round.dark.svg#gh-dark-mode-only" width=64/></td><td><code>tittle = 'round'</code>, <code>VDAA = 1</code></td></tr>
@@ -3634,8 +3634,29 @@ The properties in the `namingOverride` section could be uase to override menu na
  - `urlDesigner`: Name ID 12, URL of typeface designer.
  - `license` (or alternatively `licence`): Name ID 13, license description.
  - `licenseURL` (or alternatively `licenceURL`): Name ID 14, license Info URL.
+ - `version`: Override font version. The version number should follow [SemVer](https://semver.org/), like being `1.0.0`.
 
-In addition, you can also use the `version` property to override font version. The version number should follow [SemVer](https://semver.org/), like being `1.0.0`.
+Additionally, the `namingOverride` section now supports a `menuNameMap` configuration property. This property allows for the customization of menu names based on specific attributes related to the font's style and characteristics. The `menuNameMap` configuration is structured as follows:
+
+- `weight`: A mapping of menu weight numbers to their corresponding names.
+- `width`: A mapping of menu width numbers to their corresponding names.
+- `slope`: A mapping of menu slope values (`"normal"`/`"italic"`/`"oblique"`) to their corresponding names.
+- `weightShort`: A mapping of menu weight numbers to short names.
+- `widthShort`: A mapping of menu width numbers to short names.
+- `slopeShort`: A mapping of menu slope values (`"normal"`/`"italic"`/`"oblique"`) to short names.
+
+You are allowed to provide override names only for the values that you want to have custom names. Any values not specified in these mappings will use the default names.
+
+For example, the following configuration:
+
+```toml
+[buildPlans.IosevkaCustom.namingOverride.menuNameMap.width]
+7 = "Expanded"
+[buildPlans.IosevkaCustom.namingOverride.menuNameMap.widthShort]
+7 = "Exp"
+```
+
+... will name width 7 to "Expanded" in full, and "Exp" in short.
 
 #### Sample Configuration
 
