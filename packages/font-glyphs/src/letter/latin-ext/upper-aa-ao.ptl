@@ -9,7 +9,6 @@ glyph-block Letter-Latin-Upper-AA-AO : begin
 	glyph-block-import CommonShapes
 	glyph-block-import Common-Derivatives
 	glyph-block-import Letter-Latin-Lower-AE-OE : SubDfAndShift
-	glyph-block-import Letter-Latin-Lower-M : MEnoughSpaceForFullSerifs
 
 	do "A glyphs"
 		glyph-block-import Letter-Latin-Upper-A : AShape AConfig
@@ -66,11 +65,11 @@ glyph-block Letter-Latin-Upper-AA-AO : begin
 
 				create-glyph "\(prefix)/AU/Left.\(suffix)" : glyph-proc
 					define df : include : DivFrame adws 3.5
-					local { subDf shift } : SubDfAndShift 1 df
+					local subDf : df.slice 3 2
 					include : AShape.LetterBottomRightRemoved subDf bodyShape slabKind CAP df.mvs
 				create-glyph "\(prefix)/AU/LeftMask.\(suffix)" : glyph-proc
 					define df : include : DivFrame adws 3.5
-					local { subDf shift } : SubDfAndShift 1 df
+					local subDf : df.slice 3 2
 					include : union
 						MaskAbove : [AShape.BarPos bodyShape slabKind CAP] - df.mvs
 						MaskLeft  : subDf.width / 2
@@ -108,15 +107,18 @@ glyph-block Letter-Latin-Upper-AA-AO : begin
 				include : difference [refer-glyph right] [refer-glyph leftMask]
 
 	do "U subglyphs"
-		glyph-block-import Letter-Latin-U : CapitalUConfig
-		foreach { suffix { Base {Slabs fLTSlab} } } [Object.entries CapitalUConfig] : do
-			create-glyph "AU/Right.\(suffix)" : glyph-proc
-				define df : DivFrame para.advanceScaleMM 3.5
-				local { subDf shift } : SubDfAndShift 1 df
-				include : with-transform [ApparentTranslate shift 0]
-					union [Base subDf CAP df.mvs] [Slabs subDf CAP]
+		glyph-block-import Letter-Latin-U : UShapeGroup CapitalUConfigT
 
-		select-variant "AU/Right" (follow -- [conditional-follow [MEnoughSpaceForFullSerifs] 'AU/U/full' 'AU/U/reduced'])
+		define df : DivFrame para.advanceScaleMM 3.5
+		define { subDf shift } : SubDfAndShift 1 df
+		define sg : UShapeGroup subDf.archDepthA subDf.archDepthB
+
+		foreach { suffix { Base {Slabs fLTSlab} } } [Object.entries : CapitalUConfigT sg] : do
+			create-glyph "AU/Right.\(suffix)" : glyph-proc
+				include : with-transform [ApparentTranslate shift 0]
+					union [Base subDf CAP df.mvs] [Slabs subDf CAP df.mvs]
+
+		select-variant "AU/Right" (follow -- 'AU/U')
 
 	do "AU"
 		select-variant 'AA/AU/Left' (follow -- 'A')
@@ -131,14 +133,13 @@ glyph-block Letter-Latin-Upper-AA-AO : begin
 				include : difference [refer-glyph right]
 					intersection [refer-glyph mask] [MaskLeft (subDf.width / 2 + shift)]
 
-	do "RHA"
+	do "Rha"
 		glyph-block-import Letter-Shared-Shapes : SerifFrame WithSerifOverflowMask
 		glyph-block-import Letter-Latin-Upper-P : PShape PConfig
 		glyph-block-import Letter-Latin-X : XConfig XLetterForm XSerifs
 		glyph-block-import Letter-Latin-Lower-AE-OE : BuildRha
 
-		foreach { suffix { fGap slabs revSlabs } } [Object.entries PConfig] : do
-			local fMotion : slabs === PShape.SlabMotion
+		foreach { suffix { fGap { slabs revSlabs } } } [Object.entries PConfig] : do
 			local fSlabBot : slabs && slabs !== PShape.SlabMotion
 
 			create-glyph "cyrl/Rha/left.\(suffix)" : glyph-proc
@@ -149,7 +150,9 @@ glyph-block Letter-Latin-Upper-AA-AO : begin
 
 				include : difference
 					PShape CAP (df -- subDf) (slab -- slabs)
-					if fGap [PShape.OpenGap (df -- subDf) (top -- CAP) (bot -- [if fSlabBot df.mvs 0])] [glyph-proc]
+					if fGap
+						PShape.OpenGap (df -- subDf) (top -- CAP) (bot -- [if fSlabBot df.mvs 0])
+						no-shape
 
 		foreach { suffix {stroke1 stroke2 serifShape fMaskBase} } [Object.entries XConfig] : do
 			define [letterShape df top bot turn tension] : glyph-proc
